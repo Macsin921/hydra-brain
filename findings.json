@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "result": [
+    {
+      "type": "INFO",
+      "url": "https://hackerone.com",
+      "status": 200
+    },
+    {
+      "type": "FOUND",
+      "url": "https://hackerone.com/robots.txt",
+      "size": 43
+    }
+  ],
+  "score": 0.4
+}
