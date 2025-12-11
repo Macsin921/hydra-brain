@@ -1,0 +1,34 @@
+name: HYDRA Auto Scan
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # каждые 6 часов
+  workflow_dispatch:        # ручной запуск
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install deps
+        run: pip install requests
+      
+      - name: Run HYDRA
+        run: |
+          python hydra.py hunt bugcrowd.com
+          python hydra.py hunt hackerone.com
+          python hydra.py status
+      
+      - name: Save brain
+        run: |
+          git config user.name "HYDRA"
+          git config user.email "hydra@bot"
+          git add brain.db
+          git commit -m "🧠 brain update" || true
+          git push

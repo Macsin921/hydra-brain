@@ -3,14 +3,17 @@
   "result": [
     {
       "type": "INFO",
-      "url": "https://hackerone.com",
+      "url": "https://example.com",
       "status": 200
     },
     {
-      "type": "FOUND",
-      "url": "https://hackerone.com/robots.txt",
-      "size": 43
+      "type": "MEDIUM",
+      "vuln": "Missing X-Frame-Options"
+    },
+    {
+      "type": "LOW",
+      "vuln": "Missing CSP"
     }
   ],
-  "score": 0.4
+  "score": 0.30000000000000004
 }
