@@ -82,7 +82,7 @@ def monitor_news():
 
     last_check = {}
 
-    while True:
+    if True:  # single run
         try:
             alerts = []
 
@@ -112,11 +112,11 @@ def monitor_news():
                 send_tg(alert)
                 print(f"{datetime.now():%H:%M} {alert}")
 
-            time.sleep(1800)  # 30 минут
+            pass  # no loop  # 30 минут
 
         except Exception as e:
             print(f"Error: {e}")
-            time.sleep(300)
+            pass
 
 if __name__ == "__main__":
     monitor_news()
