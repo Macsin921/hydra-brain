@@ -5,6 +5,9 @@ on:
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -17,8 +20,7 @@ jobs:
           python-version: '3.11'
       
       - name: Install deps
-        run: |
-          pip install -r requirements.txt || pip install requests
+        run: pip install -r requirements.txt || pip install requests
       
       - name: Run HYDRA
         env:
@@ -32,5 +34,5 @@ jobs:
           git config user.name "HYDRA"
           git config user.email "hydra@bot"
           git add brain.db findings.json || true
-          git commit -m "🧠 brain update" || true
+          git diff --staged --quiet || git commit -m "🧠 brain update"
           git push
