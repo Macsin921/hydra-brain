@@ -14,3 +14,8 @@ TICKERS = [
     "AFLT", "PIKK", "IRAO", "FEES", "HYDR",
     "SFIN", "MTLR", "SMLT", "OZON", "TCSG"
 ]
+
+# Paths
+from pathlib import Path
+DB_PATH = Path(__file__).parent / "brain.db"
+FINDINGS_PATH = Path(__file__).parent / "findings.json"
