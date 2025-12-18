@@ -3,7 +3,7 @@
   "result": [
     {
       "type": "INFO",
-      "url": "https://example.com",
+      "url": "https://bugcrowd.com",
       "status": 200
     },
     {
@@ -13,7 +13,22 @@
     {
       "type": "LOW",
       "vuln": "Missing CSP"
+    },
+    {
+      "type": "FOUND",
+      "url": "https://bugcrowd.com/robots.txt",
+      "size": 82
+    },
+    {
+      "type": "INTERESTING",
+      "url": "https://bugcrowd.com/api",
+      "status": 302
+    },
+    {
+      "type": "INTERESTING",
+      "url": "https://bugcrowd.com/swagger.json",
+      "status": 302
     }
   ],
-  "score": 0.30000000000000004
+  "score": 0.5
 }
