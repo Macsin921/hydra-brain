@@ -2,8 +2,8 @@ name: HYDRA Auto Scan
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # каждые 6 часов
-  workflow_dispatch:        # ручной запуск
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   scan:
@@ -17,18 +17,20 @@ jobs:
           python-version: '3.11'
       
       - name: Install deps
-        run: pip install requests
+        run: |
+          pip install -r requirements.txt || pip install requests
       
       - name: Run HYDRA
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           python hydra.py hunt bugcrowd.com
-          python hydra.py hunt hackerone.com
           python hydra.py status
       
       - name: Save brain
         run: |
           git config user.name "HYDRA"
           git config user.email "hydra@bot"
-          git add brain.db
+          git add brain.db findings.json || true
           git commit -m "🧠 brain update" || true
           git push
