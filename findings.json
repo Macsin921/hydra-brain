@@ -22,12 +22,12 @@
     {
       "type": "INTERESTING",
       "url": "https://bugcrowd.com/api",
-      "status": 302
+      "status": 301
     },
     {
       "type": "INTERESTING",
       "url": "https://bugcrowd.com/swagger.json",
-      "status": 302
+      "status": 301
     }
   ],
   "score": 0.5
