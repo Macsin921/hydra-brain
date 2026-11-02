@@ -6,6 +6,7 @@ import sys
 from brain import Brain
 from agents import SecurityAgent
 from data.moex_client import MoexClient
+from data.supabase_client import SupabaseClient
 from trading.market_features import MarketFeatures
 from trading.signal_engine import SignalEngine
 from trading.trader_agent import TraderAgent
@@ -19,6 +20,7 @@ class Hydra:
         self.features = MarketFeatures(self.moex)
         self.engine = SignalEngine()
         self.trader = TraderAgent()
+        self.db = SupabaseClient()
         self.agents = {
             "security": SecurityAgent(self.brain),
         }
@@ -31,7 +33,7 @@ class Hydra:
             return "security"
         return "security"
 
-    def trade_scan(self, limit: int = 5, explain: bool = False):
+    def trade_scan(self, limit: int = 5, explain: bool = False, persist: bool = True):
         results = []
         for ticker in TICKERS[:limit]:
             data = self.features.collect(ticker)
@@ -44,8 +46,16 @@ class Hydra:
                 delta_pct=data["delta_pct"],
             )
             item = self.engine.to_dict(signal)
+            ma10 = self.engine.moving_average(data["closes"])
+
+            if persist:
+                item["saved_snapshot"] = self.db.save_snapshot(data, ma10)
+                if item["direction"] != "NEUTRAL":
+                    item["saved_signal"] = self.db.save_signal(item)
+
             if explain and item["direction"] != "NEUTRAL":
                 item["explanation"] = self.trader.explain(item)
+
             results.append(item)
         return results
 
@@ -65,7 +75,7 @@ def main():
 
     if len(sys.argv) < 2:
         print("HYDRA v2")
-        print("  python hydra.py trade scan [limit] [--explain]")
+        print("  python hydra.py trade scan [limit] [--explain] [--no-save]")
         print("  python hydra.py hunt <target>")
         print("  python hydra.py status")
         return
@@ -77,9 +87,10 @@ def main():
     elif command == "trade" and len(sys.argv) > 2 and sys.argv[2] == "scan":
         args = sys.argv[3:]
         explain = "--explain" in args
+        persist = "--no-save" not in args
         numeric = [int(value) for value in args if value.isdigit()]
         limit = numeric[0] if numeric else 5
-        signals = hydra.trade_scan(limit, explain)
+        signals = hydra.trade_scan(limit, explain, persist)
         print(json.dumps(signals, indent=2, ensure_ascii=False))
     elif command == "hunt" and len(sys.argv) > 2:
         result = hydra.run(f"hunt {sys.argv[2]}")
