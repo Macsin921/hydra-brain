@@ -1,0 +1,16 @@
+[Unit]
+Description=HYDRA Telegram Trading Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/hydra-brain
+EnvironmentFile=/opt/hydra-brain/.env
+ExecStart=/usr/bin/python3 /opt/hydra-brain/telegram_bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
