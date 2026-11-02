@@ -1,5 +1,6 @@
 import requests
 from data.moex_client import MoexClient
+from trading.futures_map import future_for
 
 
 class MarketFeatures:
@@ -17,16 +18,17 @@ class MarketFeatures:
         return round(current / average, 2) if average else 0.0
 
     def futoi(self, ticker: str) -> dict:
-        """Пробует получить OI и позиции из MOEX FUTOI.
-        Для акций нужен соответствующий тикер фьючерса; если данных нет, возвращает нули."""
+        security = future_for(ticker)
+        if not security:
+            return {"future": None, "oi_change_pct": 0.0, "delta_pct": 0.0}
         try:
-            response = requests.get(self.FUTOI_URL.format(security=ticker), timeout=10)
+            response = requests.get(self.FUTOI_URL.format(security=security), timeout=10)
             response.raise_for_status()
             payload = response.json()
             columns = payload["futoi"]["columns"]
             rows = payload["futoi"]["data"]
             if not rows:
-                return {"oi_change_pct": 0.0, "delta_pct": 0.0}
+                return {"future": security, "oi_change_pct": 0.0, "delta_pct": 0.0}
             row = dict(zip(columns, rows[-1]))
             oi = row.get("OI") or 0
             oi_change = row.get("OI_CHANGE") or 0
@@ -36,9 +38,13 @@ class MarketFeatures:
             oi_change_pct = round(oi_change / oi_prev * 100, 2) if oi_prev else 0.0
             total = longs + shorts
             delta_pct = round((longs - shorts) / total * 100, 2) if total else 0.0
-            return {"oi_change_pct": oi_change_pct, "delta_pct": delta_pct}
+            return {
+                "future": security,
+                "oi_change_pct": oi_change_pct,
+                "delta_pct": delta_pct,
+            }
         except Exception:
-            return {"oi_change_pct": 0.0, "delta_pct": 0.0}
+            return {"future": security, "oi_change_pct": 0.0, "delta_pct": 0.0}
 
     def collect(self, ticker: str) -> dict:
         history = self.moex.get_history(ticker, days=30)
@@ -47,6 +53,7 @@ class MarketFeatures:
         features = self.futoi(ticker)
         return {
             "ticker": ticker,
+            "future": features.get("future"),
             "price": quote.get("price"),
             "closes": closes,
             "volume_ratio": self.volume_ratio(history),
