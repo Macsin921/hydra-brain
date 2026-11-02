@@ -1,6 +1,6 @@
 import requests
 from data.moex_client import MoexClient
-from trading.futures_map import future_for
+from trading.futures_map import nearest_future_for
 
 
 class MarketFeatures:
@@ -8,6 +8,7 @@ class MarketFeatures:
 
     def __init__(self, moex_client: MoexClient):
         self.moex = moex_client
+        self._future_cache: dict[str, str | None] = {}
 
     def volume_ratio(self, history: list[dict]) -> float:
         volumes = [item.get("volume") or 0 for item in history if item.get("volume")]
@@ -17,8 +18,13 @@ class MarketFeatures:
         average = sum(volumes[-21:-1]) / 20
         return round(current / average, 2) if average else 0.0
 
+    def future_for(self, ticker: str) -> str | None:
+        if ticker not in self._future_cache:
+            self._future_cache[ticker] = nearest_future_for(ticker)
+        return self._future_cache[ticker]
+
     def futoi(self, ticker: str) -> dict:
-        security = future_for(ticker)
+        security = self.future_for(ticker)
         if not security:
             return {"future": None, "oi_change_pct": 0.0, "delta_pct": 0.0}
         try:
