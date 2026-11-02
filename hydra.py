@@ -6,6 +6,7 @@ import sys
 from brain import Brain
 from agents import SecurityAgent
 from data.moex_client import MoexClient
+from trading.market_features import MarketFeatures
 from trading.signal_engine import SignalEngine
 from trading.trader_agent import TraderAgent
 from tickers import TICKERS
@@ -15,6 +16,7 @@ class Hydra:
     def __init__(self):
         self.brain = Brain()
         self.moex = MoexClient()
+        self.features = MarketFeatures(self.moex)
         self.engine = SignalEngine()
         self.trader = TraderAgent()
         self.agents = {
@@ -29,18 +31,22 @@ class Hydra:
             return "security"
         return "security"
 
-    def trade_scan(self, limit: int = 5):
+    def trade_scan(self, limit: int = 5, explain: bool = False):
         results = []
         for ticker in TICKERS[:limit]:
-            quote = self.moex.get_quote(ticker)
-            history = self.moex.get_history(ticker, days=30)
-            closes = [item["close"] for item in history if item.get("close")]
+            data = self.features.collect(ticker)
             signal = self.engine.build_signal(
                 ticker=ticker,
-                price=quote.get("price"),
-                closes=closes,
+                price=data["price"],
+                closes=data["closes"],
+                volume_ratio=data["volume_ratio"],
+                oi_change_pct=data["oi_change_pct"],
+                delta_pct=data["delta_pct"],
             )
-            results.append(self.engine.to_dict(signal))
+            item = self.engine.to_dict(signal)
+            if explain and item["direction"] != "NEUTRAL":
+                item["explanation"] = self.trader.explain(item)
+            results.append(item)
         return results
 
     def run(self, task: str):
@@ -59,7 +65,7 @@ def main():
 
     if len(sys.argv) < 2:
         print("HYDRA v2")
-        print("  python hydra.py trade scan [limit]")
+        print("  python hydra.py trade scan [limit] [--explain]")
         print("  python hydra.py hunt <target>")
         print("  python hydra.py status")
         return
@@ -69,8 +75,11 @@ def main():
     if command == "status":
         print(json.dumps(hydra.status(), indent=2, ensure_ascii=False))
     elif command == "trade" and len(sys.argv) > 2 and sys.argv[2] == "scan":
-        limit = int(sys.argv[3]) if len(sys.argv) > 3 else 5
-        signals = hydra.trade_scan(limit)
+        args = sys.argv[3:]
+        explain = "--explain" in args
+        numeric = [int(value) for value in args if value.isdigit()]
+        limit = numeric[0] if numeric else 5
+        signals = hydra.trade_scan(limit, explain)
         print(json.dumps(signals, indent=2, ensure_ascii=False))
     elif command == "hunt" and len(sys.argv) > 2:
         result = hydra.run(f"hunt {sys.argv[2]}")
